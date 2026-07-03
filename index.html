@@ -86,6 +86,48 @@ td.gp{background:#0a0f18;border-right:1px solid #1e2a3a;width:4px;padding:0}
 .tier-gs{background:#162a20;color:#3d9060;border:1px solid #1e3828}
 .tier-sc{background:#2e1a1a;color:#d95b5b;border:1px solid #4a2222}
 .tier-ot{background:#1a1f2e;color:#5a6880;border:1px solid #252e42}
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:4px}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-sub);cursor:pointer;font-size:12px;padding:10px 14px 9px}
+.tab-btn.active{border-bottom-color:var(--accent);color:var(--text);background:#131b28}
+.sheet-pane{display:none}
+.sheet-pane.active{display:block}
+.s2-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+.s2-card{border:1px solid var(--border-soft);border-radius:6px;background:var(--surface);overflow:hidden}
+.s2-card.wide{grid-column:1/-1}
+.s2-card-hd{padding:10px 12px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.s2-card-title{font-size:13px;font-weight:600;color:var(--text)}
+.s2-card-sub{font-size:11px;color:var(--text-mute);white-space:nowrap}
+.s2-table-wrap{overflow:auto}
+.s2-table{min-width:0;width:100%;border-collapse:collapse}
+.s2-table.fixed{table-layout:fixed}
+.s2-table th{background:#111a27;color:var(--text-sub);font-size:11px;font-weight:500;text-align:left;padding:7px 8px;border-bottom:1px solid var(--border-soft)}
+.s2-table td{font-size:11px;padding:7px 8px;border-bottom:1px solid var(--border-soft);border-right:none;color:#a8bcd8;vertical-align:top}
+.s2-table tr:last-child td{border-bottom:none}
+.s2-num{text-align:right;white-space:nowrap}
+.s2-center{text-align:center;white-space:nowrap}
+.s2-slot{white-space:normal;line-height:1.45;word-break:break-word}
+.s2-dual{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px}
+.s2-rank-panel{border:1px solid var(--border-soft);border-radius:5px;overflow:hidden;background:#0f1624}
+.s2-rank-title{padding:8px 10px;border-bottom:1px solid var(--border-soft);font-size:12px;font-weight:600;color:var(--text-sub)}
+.s2-pos{color:var(--pos);font-weight:600}
+.s2-neg{color:var(--neg);font-weight:600}
+.s2-muted{color:var(--text-mute)}
+.s2-summary{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px;padding:10px}
+.s2-tier-box{background:#0f1624;border:1px solid var(--border-soft);border-radius:5px;padding:9px;cursor:pointer;transition:border-color .15s,background .15s}
+.s2-tier-box:hover,.s2-tier-box.active{background:#142033;border-color:var(--accent)}
+.s2-tier-name{font-size:11px;color:var(--text-sub);margin-bottom:6px}
+.s2-tier-main{font-size:18px;color:var(--text);font-weight:600}
+.s2-tier-risk{font-size:11px;color:var(--neg);margin-top:3px}
+.scatter-wrap{padding:10px}
+.scatter-svg{display:block;width:100%;height:390px;background:#0b111c;border:1px solid var(--border-soft);border-radius:5px}
+.s2-risk-note{font-size:11px;color:var(--text-mute);line-height:1.6;padding:0 12px 10px}
+.quad-label{fill:#566985;font-size:11px}
+.axis-label{fill:#7a90b0;font-size:11px}
+.point-label{fill:#d6e5fa;font-size:10px}
+@media (max-width:900px){
+  .s2-dual{grid-template-columns:1fr}
+  .s2-summary{grid-template-columns:repeat(2,minmax(120px,1fr))}
+}
 </style>
 </head>
 <body>
@@ -133,17 +175,52 @@ td.gp{background:#0a0f18;border-right:1px solid #1e2a3a;width:4px;padding:0}
   <button class="btn" onclick="render()">刷新</button>
   <span class="ccnt" id="cc"></span>
 </div>
-<div class="content">
+<div class="tabs">
+  <button class="tab-btn active" id="tab-sheet1" onclick="switchSheet('sheet1')">sheet1 · 免佣策略对比看板</button>
+  <button class="tab-btn" id="tab-sheet2" onclick="switchSheet('sheet2')">sheet2 · 监控图表</button>
+</div>
+<div class="content sheet-pane active" id="sheet1">
   <div class="th-row">
     <div class="th-title">三方时长对比 · 最近 4 周</div>
     <div class="th-desc" id="wr"></div>
   </div>
   <div class="tw" id="tw"><div class="empty">初始化…</div></div>
 </div>
+<div class="content sheet-pane" id="sheet2">
+  <div class="th-row">
+    <div class="th-title">sheet2 · 免佣监控图表</div>
+    <div class="th-desc" id="s2-desc"></div>
+  </div>
+  <div class="s2-grid">
+    <div class="s2-card">
+      <div class="s2-card-hd">
+        <div class="s2-card-title">表 1：自营 vs 宏鹄免佣时段差距 Top 20</div>
+        <div class="s2-card-sub" id="s2-t1-sub"></div>
+      </div>
+      <div class="s2-table-wrap" id="s2-gap"></div>
+    </div>
+    <div class="s2-card">
+      <div class="s2-card-hd">
+        <div class="s2-card-title">表 2：周同比波动榜</div>
+        <div class="s2-card-sub" id="s2-t2-sub"></div>
+      </div>
+      <div class="s2-table-wrap" id="s2-wow"></div>
+    </div>
+    <div class="s2-card wide">
+      <div class="s2-card-hd">
+        <div class="s2-card-title">表 3：异常离群监控大盘</div>
+        <div class="s2-card-sub" id="s2-t3-sub"></div>
+      </div>
+      <div id="s2-risk"></div>
+    </div>
+  </div>
+</div>
 <script>
 
 const WD=['周一','周二','周三','周四','周五','周六','周日'];
 let MODE=0;
+let ACTIVE_SHEET='sheet1';
+let S2_RISK_TIER='';
 // city completion-order rank + tier (injected at file end from Excel)
 let CITY_RANK={}, CITY_TIER={};
 // selected sets; empty = all
@@ -217,6 +294,13 @@ function buildWdList(){
 function setMode(m){
   MODE=m;
   ['m0','m1','m2'].forEach((id,i)=>document.getElementById(id).className='mode-btn'+(i===m?' active':''));
+  render();
+}
+function switchSheet(id){
+  ACTIVE_SHEET=id;
+  document.querySelectorAll('.sheet-pane').forEach(el=>el.classList.toggle('active',el.id===id));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
   render();
 }
 
@@ -336,6 +420,201 @@ function getWeeks(base){
   return wks;
 }
 
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function fmtHour(mins){
+  const h=mins/60;
+  const abs=Math.abs(h);
+  const v=abs>=10?Math.round(h):Math.round(h*10)/10;
+  return v+'小时';
+}
+function slotText(city,weekMon,wi,sup){
+  const segs=getSegs(city,weekMon,wi,sup);
+  return segs.length?segs.map(s=>s.s+'-'+s.e).join(' '):'—';
+}
+function segCount(city,weekMon,wi,sup){
+  return getSegs(city,weekMon,wi,sup).length;
+}
+function dayTotal(city,weekMon,wi){
+  return getMins(city,weekMon,wi,'自营')+getMins(city,weekMon,wi,'宏鹄');
+}
+function weekSupplierTotal(city,weekMon,sup){
+  let total=0;
+  for(let i=0;i<7;i++)total+=getMins(city,weekMon,i,sup);
+  return total;
+}
+function weekTotal(city,weekMon){
+  let total=0;
+  for(let i=0;i<7;i++)total+=dayTotal(city,weekMon,i);
+  return total;
+}
+function filteredCities(){
+  const fTier=document.getElementById('tier-sel').value;
+  let cities=allCities;
+  if(fTier)cities=cities.filter(c=>(CITY_TIER[c]||'其他')===fTier);
+  if(selCities.size>0)cities=cities.filter(c=>selCities.has(c));
+  return cities;
+}
+function selectedDateMeta(){
+  const date=document.getElementById('bw').value||fmtYMD(new Date());
+  const d=parseD(date);
+  const wi=d.getDay()===0?6:d.getDay()-1;
+  return {date,weekMon:getMon(date),wi};
+}
+function s2CityRows(){
+  const meta=selectedDateMeta();
+  const lastWeek=addD(meta.weekMon,-7);
+  return filteredCities().map(city=>{
+    const zy=getMins(city,meta.weekMon,meta.wi,'自营');
+    const hh=getMins(city,meta.weekMon,meta.wi,'宏鹄');
+    const total=zy+hh;
+    const prev=dayTotal(city,lastWeek,meta.wi);
+    const delta=total-prev;
+    return {
+      city,
+      tier:CITY_TIER[city]||'其他',
+      zy,
+      hh,
+      total,
+      prev,
+      delta,
+      gap:zy-hh,
+      zyCount:segCount(city,meta.weekMon,meta.wi,'自营'),
+      hhCount:segCount(city,meta.weekMon,meta.wi,'宏鹄'),
+      zySlots:slotText(city,meta.weekMon,meta.wi,'自营'),
+      hhSlots:slotText(city,meta.weekMon,meta.wi,'宏鹄')
+    };
+  });
+}
+function renderGapTable(rows,meta){
+  const top=rows.filter(r=>r.zy||r.hh).sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap)||b.total-a.total).slice(0,20);
+  let h='<table class="s2-table fixed"><colgroup><col style="width:64px"><col style="width:90px"><col style="width:110px"><col><col style="width:76px"><col><col style="width:76px"><col style="width:120px"></colgroup><thead><tr><th>日期</th><th>城市</th><th>分框</th><th>自营具体免佣时段</th><th class="s2-center">自营时段数</th><th>宏鹄具体免佣时段</th><th class="s2-center">宏鹄时段数</th><th class="s2-num">差距（自营-宏鹄）</th></tr></thead><tbody>';
+  if(!top.length)h+='<tr><td colspan="8" class="empty">无匹配数据</td></tr>';
+  top.forEach(r=>{
+    const cls=r.gap>0?'s2-pos':(r.gap<0?'s2-neg':'s2-muted');
+    h+='<tr><td>'+fmtD(meta.date)+'</td><td>'+esc(r.city)+'</td><td>'+esc(r.tier)+'</td><td class="s2-slot">'+esc(r.zySlots)+'</td><td class="s2-center">'+r.zyCount+'</td><td class="s2-slot">'+esc(r.hhSlots)+'</td><td class="s2-center">'+r.hhCount+'</td><td class="s2-num '+cls+'">'+(r.gap>0?'+':'')+fmtHour(r.gap)+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('s2-gap').innerHTML=h;
+  document.getElementById('s2-t1-sub').textContent=meta.date+' · '+top.length+' 城';
+}
+function renderWowTable(meta){
+  const thisWeek=meta.weekMon;
+  const lastWeek=addD(thisWeek,-7);
+  const rows=filteredCities().map(city=>{
+    const zyNow=weekSupplierTotal(city,thisWeek,'自营');
+    const zyPrev=weekSupplierTotal(city,lastWeek,'自营');
+    const hhNow=weekSupplierTotal(city,thisWeek,'宏鹄');
+    const hhPrev=weekSupplierTotal(city,lastWeek,'宏鹄');
+    const now=zyNow+hhNow;
+    const prev=zyPrev+hhPrev;
+    return {
+      city,
+      tier:CITY_TIER[city]||'其他',
+      now,
+      prev,
+      delta:now-prev,
+      zyDelta:zyNow-zyPrev,
+      hhDelta:hhNow-hhPrev
+    };
+  }).filter(r=>r.now||r.prev);
+  const up=rows.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,10);
+  const down=rows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,10);
+  const renderRank=(title,list,deltaCls)=>{
+    let h='<div class="s2-rank-panel"><div class="s2-rank-title">'+title+'</div><table class="s2-table fixed"><colgroup><col style="width:34px"><col style="width:86px"><col style="width:82px"><col style="width:82px"><col style="width:82px"><col style="width:82px"><col style="width:82px"></colgroup><thead><tr><th>#</th><th>城市</th><th class="s2-num">上周合计</th><th class="s2-num">本周合计</th><th class="s2-num">合计变化</th><th class="s2-num">自营变化</th><th class="s2-num">宏鹄变化</th></tr></thead><tbody>';
+    for(let i=0;i<10;i++){
+      const r=list[i];
+      if(!r){h+='<tr><td colspan="7" class="s2-muted">—</td></tr>';continue;}
+      h+='<tr><td>'+(i+1)+'</td><td>'+esc(r.city)+'</td><td class="s2-num">'+fmtHour(r.prev)+'</td><td class="s2-num">'+fmtHour(r.now)+'</td><td class="s2-num '+deltaCls+'">'+(r.delta>0?'+':'')+fmtHour(r.delta)+'</td><td class="s2-num '+(r.zyDelta>=0?'s2-pos':'s2-neg')+'">'+(r.zyDelta>0?'+':'')+fmtHour(r.zyDelta)+'</td><td class="s2-num '+(r.hhDelta>=0?'s2-pos':'s2-neg')+'">'+(r.hhDelta>0?'+':'')+fmtHour(r.hhDelta)+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
+    return h;
+  }
+  let h='<div class="s2-dual">'+renderRank('合计时长提升 Top 10',up,'s2-pos')+renderRank('合计时长下降 Top 10',down,'s2-neg')+'</div>';
+  document.getElementById('s2-wow').innerHTML=h;
+  document.getElementById('s2-t2-sub').textContent='按合计时长排序 · '+fmtD(thisWeek)+'~'+fmtD(addD(thisWeek,6))+' vs '+fmtD(lastWeek)+'~'+fmtD(addD(lastWeek,6));
+}
+function renderRisk(rows,meta){
+  const thisWeek=meta.weekMon;
+  const lastWeek=addD(thisWeek,-7);
+  const active=filteredCities().map(city=>{
+    const now=weekTotal(city,thisWeek);
+    const prev=weekTotal(city,lastWeek);
+    return {
+      city,
+      tier:CITY_TIER[city]||'其他',
+      total:now,
+      prev,
+      delta:now-prev
+    };
+  }).filter(r=>r.total||r.prev);
+  const n=active.length||1;
+  const totals=active.map(r=>r.total).sort((a,b)=>a-b);
+  const deltas=active.map(r=>Math.abs(r.delta)).sort((a,b)=>a-b);
+  const pct=(arr,p)=>arr.length?arr[Math.min(arr.length-1,Math.floor((arr.length-1)*p))]:0;
+  const avgX=active.reduce((s,r)=>s+r.total,0)/n;
+  const sdX=Math.sqrt(active.reduce((s,r)=>s+Math.pow(r.total-avgX,2),0)/n)||1;
+  const highThreshold=Math.max(pct(totals,.75),avgX+sdX*.5);
+  const swingThreshold=Math.max(480,pct(deltas,.75));
+  active.forEach(r=>{
+    r.risk=r.total>=highThreshold&&Math.abs(r.delta)>=swingThreshold;
+    r.riskType=r.risk?(r.delta>=0?'高强度大幅上涨':'高强度大幅下降'):(r.delta>=0?'中低强度上涨':'中低强度下降');
+  });
+  const tiers=['核心城市','行业增长-大','行业增长-小','战略收缩城市','其他'];
+  let summary='<div class="s2-summary">';
+  tiers.forEach(t=>{
+    const list=active.filter(r=>r.tier===t);
+    summary+='<div class="s2-tier-box'+(S2_RISK_TIER===t?' active':'')+'" onclick="setS2RiskTier(\''+t+'\')"><div class="s2-tier-name">'+t+'</div><div class="s2-tier-main">'+list.filter(r=>r.total>0).length+'</div><div class="s2-tier-risk">需关注城市 '+list.filter(r=>r.risk).length+'</div></div>';
+  });
+  summary+='</div>';
+  const scoped=S2_RISK_TIER?active.filter(r=>r.tier===S2_RISK_TIER):active;
+
+  const w=960,h=390,pad=42;
+  const maxX=Math.max(...scoped.map(r=>r.total),highThreshold,1);
+  const minY=Math.min(...scoped.map(r=>r.delta),0);
+  const maxY=Math.max(...scoped.map(r=>r.delta),1);
+  const ySpan=(maxY-minY)||1;
+  const sx=x=>pad+(x/(maxX||1))*(w-pad*2);
+  const sy=y=>h-pad-((y-minY)/ySpan)*(h-pad*2);
+  const xMid=sx(highThreshold),yMid=sy(0);
+  let svg='<div class="scatter-wrap"><svg class="scatter-svg" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="四象限散点图">';
+  svg+='<line x1="'+pad+'" y1="'+yMid+'" x2="'+(w-pad)+'" y2="'+yMid+'" stroke="#27354a"/><line x1="'+xMid+'" y1="'+pad+'" x2="'+xMid+'" y2="'+(h-pad)+'" stroke="#27354a"/>';
+  svg+='<text x="'+(pad+8)+'" y="'+(pad+16)+'" class="quad-label">低强度上涨</text><text x="'+(xMid+10)+'" y="'+(pad+16)+'" class="quad-label">高强度大幅上涨</text>';
+  svg+='<text x="'+(pad+8)+'" y="'+(h-pad-8)+'" class="quad-label">低强度下降</text><text x="'+(xMid+10)+'" y="'+(h-pad-8)+'" class="quad-label">高强度大幅下降</text>';
+  svg+='<text x="'+(w-pad-170)+'" y="'+(h-10)+'" class="axis-label">横轴：本周合计免佣小时</text><text x="10" y="'+(pad-12)+'" class="axis-label">纵轴：周同比变化小时</text>';
+  scoped.forEach(r=>{
+    const color=r.risk?'#d95b5b':(r.delta>=0?'#3daf72':'#4d8fdb');
+    const x=sx(r.total),y=sy(r.delta);
+    svg+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(r.risk?4.2:2.8)+'" fill="'+color+'" opacity=".82"/>';
+    if(r.risk)svg+='<text x="'+(x+6).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" class="point-label">'+esc(r.city)+'</text>';
+  });
+  svg+='</svg></div>';
+  const note='<div class="s2-risk-note">异常定义：本周合计免佣小时达到高强度阈值，且周同比变化达到大幅波动阈值。高强度阈值=max(城市本周合计小时P75, 均值+0.5σ)；大幅波动阈值=max(8小时, |周同比变化|P75)。右上为高强度大幅上涨，右下为高强度大幅下降。</div>';
+
+  const abnormal=scoped.filter(r=>r.risk).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,20);
+  let detail='<div class="s2-table-wrap"><table class="s2-table"><thead><tr><th>城市</th><th>分框</th><th class="s2-num">本周合计</th><th class="s2-num">上周合计</th><th class="s2-num">周同比变化</th><th>风险类型</th></tr></thead><tbody>';
+  if(!abnormal.length)detail+='<tr><td colspan="6" class="empty">暂无异常城市</td></tr>';
+  abnormal.forEach(r=>{
+    detail+='<tr><td>'+esc(r.city)+'</td><td>'+esc(r.tier)+'</td><td class="s2-num">'+fmtHour(r.total)+'</td><td class="s2-num">'+fmtHour(r.prev)+'</td><td class="s2-num '+(r.delta>=0?'s2-pos':'s2-neg')+'">'+(r.delta>0?'+':'')+fmtHour(r.delta)+'</td><td>'+r.riskType+'</td></tr>';
+  });
+  detail+='</tbody></table></div>';
+  document.getElementById('s2-risk').innerHTML=summary+svg+note+detail;
+  document.getElementById('s2-t3-sub').textContent=meta.date+' · '+(S2_RISK_TIER||'全部分框')+' · 需关注 '+abnormal.length+' 城';
+}
+function setS2RiskTier(tier){
+  S2_RISK_TIER=S2_RISK_TIER===tier?'':tier;
+  renderSheet2();
+}
+function renderSheet2(){
+  const meta=selectedDateMeta();
+  const rows=s2CityRows();
+  document.getElementById('s2-desc').textContent='监控日 '+meta.date+' · '+WD[meta.wi]+' · 当前筛选 '+filteredCities().length+' 城';
+  renderGapTable(rows,meta);
+  renderWowTable(meta);
+  renderRisk(rows,meta);
+}
+
 function render(){
   const bwVal=document.getElementById('bw').value;
   const base=getMon(bwVal||fmtYMD(new Date()));
@@ -434,6 +713,12 @@ function render(){
   h+='</tbody></table>';
   document.getElementById('tw').innerHTML=h;
 }
+
+const renderSheet1=render;
+render=function(){
+  renderSheet1();
+  if(ACTIVE_SHEET==='sheet2')renderSheet2();
+};
 
 function init(){
   buildMap(EMBEDDED_DATA);
